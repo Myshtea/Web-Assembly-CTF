@@ -1,5 +1,10 @@
 # DD2525-project-wasm
 
+## Authors
+
+ - [Myshtea](https://github.com/Myshtea)
+ - [Zoé Lagache](https://github.com/zoeLagache)
+
 ## Dependences
 ### Emscripten
 First thing is to follow the installation guide of emcc (emscripten c compiler) so that you can build every challenge
