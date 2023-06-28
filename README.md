@@ -1,4 +1,4 @@
-# DD2525-project-wasm
+# Web Assembly CTF
 
 Web assembly challenges created as a PoC for the DD2525 course. Github page copied from the KTH github.
 
