@@ -1,0 +1,109 @@
+//Beginning of custom code
+var http = require('http');
+var formidable = require('formidable');
+const util = require("util");
+
+
+
+//
+const def_head_html = "<!DOCTYPE html><html><head><title>WASM - Useful feedback</title></head>"
+
+const def_body_start = "<body><link rel='stylesheet' property='stylesheet' id='s' type='text/css' href='/template/s.css' media='all' /><h1>WASM - Challenge</h1><br>"
+	
+const def_body = "<h3>Hey, welcome to my super Feedback website, please drop a file containing a feedback</h3>\n<h4>Also I limited the messages to 256 chars after someone sent the whole 'bee movie' script..</h4>\n<h4>My code is open source : visit <a download='source.c' href='/source'>SOURCE</a></h4>"
+const def_body_end = "</body></html>"
+
+
+
+
+
+const com = cwrap('com',null,['string']);
+
+
+function handle_payloads(payload,callback){
+	var mess;
+	try {
+		com(payload);
+		mess = "Message succesfully sent ! We really appreciate feedback, here is a cookie A9A48953879546BEBFF641C2A1D16049 ;)";
+	}
+	catch (e) {
+		console.log(e);
+		mess = "You crashed my c code ... : \n"+e;
+	}
+
+	callback(null,mess);
+}	
+
+
+function read_user_file(filepath,callback){
+	fs.readFile(filepath, 'utf8', (err, data) => {
+		if (err) {
+			console.error(err);
+			return;
+		}
+		handle_payloads(data, function(err, result){
+			if(err){
+				callback(err);
+			}
+			callback(null,result);
+		});
+	});
+}
+
+http.createServer(function (req, res) {
+	switch (req.url){
+		case '/source':
+			var file = fs.statSync('./RCE.c');
+			res.writeHead(200, {'Content-Type':'text/plain', 'Content-Length':file.size});
+			var readStream = fs.createReadStream('./RCE.c');
+			readStream.pipe(res);
+			break;
+		case '/template/s.css':
+			res.writeHead(200, {"Content-Type":"text/css"});
+			fs.readFile('./template/s.css',function(err,data){
+				if (!err){
+					res.write(data);
+				}
+				res.end();
+			});
+			break;
+		case '/fileupload':
+			res.writeHead(200, {'Content-Type': 'text/plain'});
+			var form = new formidable.IncomingForm();
+			form.parse(req, function (err, fields, files) {
+				if(files.filetoupload == undefined){
+					res.write('Transfer problem');
+					res.end();
+				}
+				else{
+					read_user_file(files.filetoupload.filepath, function(err, result){
+						if(err){
+							res.write(err);
+						}
+						res.write(result);
+						res.end();
+					});
+				}
+			});
+			break;
+		case '/' :
+			res.writeHead(200, {'Content-Type': 'text/html'});
+			res.write(def_head_html);
+			res.write(def_body_start);
+			res.write(def_body);
+			res.write('<form action="fileupload" method="post" enctype="multipart/form-data">');
+			res.write('<input type="file" name="filetoupload"><br>');
+			res.write('<input type="submit">');
+			res.write('</form>');
+			res.write(def_body_end);
+			return res.end();
+			break;
+		default:
+			res.writeHead(404, {'Content-Type': 'text/html'});
+			res.write("404");
+			res.end();
+			break;
+	}
+}).listen(1337, '127.0.0.1');
+
+console.log('Server running at http://127.0.0.1:1337/');
